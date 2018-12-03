@@ -110,7 +110,7 @@ void Order::OrderBook::modify(int order_id, int new_size)
 			
 			if (new_size) 
 			{ 
-                mapIter->second.size=new_size;  
+		        mapIter->second.size=new_size;  
 			//	orderFromMap.size=new_size;
 			}
 
@@ -221,7 +221,6 @@ int Order::OrderBook::get_size(char side, int level)
 		case 'B':
 			{
 				std::lock_guard<std::mutex> lg_BidsMap_mutex(BidsMap_mutex);
-				if(level==1)
 
 				if(level==1)
                 {
