@@ -6,7 +6,7 @@ std::pair<std::map<char,int>::iterator,bool> ret;
 std::mutex outmutex;
 
 
-void Order::OrderBook::add(int order_id, char side, double price, int	size)
+void Order::OrderBook::add(int order_id, char side, double price, int size)
 {
 	LMTOrder Order(order_id,side,price,size);
 	
@@ -216,16 +216,27 @@ int Order::OrderBook::get_size(char side, int level)
 {
         
     MapIter mapiter; 
+    std::pair<BidsMap::iterator,BidsMap::iterator> rangePair;
+
 	switch(side)
 	{
 		case 'B':
 			{
+
 				std::lock_guard<std::mutex> lg_BidsMap_mutex(BidsMap_mutex);
 
 				if(level==1)
                 {
+					int totalsize=0;
                     mapiter=bidsMap.begin();
-                    return((*mapiter).second.size);
+                    rangePair=bidsMap.equal_range((*mapiter).first); 
+					for(mapiter = rangePair.first ;mapiter !=rangePair.second;++mapiter)
+					{
+						totalsize+=(*mapiter).second.size;
+					}
+
+					return(totalsize);
+					 
 			    }	    
 
 			}
@@ -236,8 +247,15 @@ int Order::OrderBook::get_size(char side, int level)
 
 				if(level==1)
                 {
+					int totalsize=0;
                     mapiter=asksMap.begin();
-                    return((*mapiter).second.size);
+                    rangePair=asksMap.equal_range((*mapiter).first); 
+					for(mapiter = rangePair.first ;mapiter !=rangePair.second;++mapiter)
+					{
+						totalsize+=(*mapiter).second.size;
+						std::cout<<(*mapiter).first <<" "<<totalsize;
+					}
+                               return totalsize;
 			    }	    
                 
 			}
