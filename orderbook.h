@@ -4,26 +4,23 @@
 
 #include<iostream>
 #include<map>
+#include<unordered_map>
 #include<mutex>
 
 namespace Order
 {
 
-	typedef struct LimitOrder
+    typedef struct LimitOrder
 	{
 		typedef int orderid;
 		typedef char loside;
 		typedef double loprice;
 		typedef int	losize;
 
-	private:
-	
 		orderid order_id;
 		loside side;
 		loprice price;
 		losize size;
-
-	public:
 
 		LimitOrder(orderid f_orderid,loside f_side,loprice f_price,losize f_size)
 			:order_id(f_orderid),side(f_side),price(f_price),size(f_size) {}
@@ -50,38 +47,35 @@ namespace Order
 
 		private:
 
-			char getside(int);
+		char getside(int);
 
-			typedef std::multimap<LimitOrder::loprice,Order,std::greater<LimitOrder::loprice> > BidsMap;
-			typedef std::multimap<LimitOrder::loprice,Order,std::less<LimitOrder::loprice> > AsksMap;
+		typedef std::multimap<LimitOrder::loprice,LMTOrder,std::greater<LimitOrder::loprice> > BidsMap;
+		typedef std::multimap<LimitOrder::loprice,LMTOrder,std::less<LimitOrder::loprice> > AsksMap;
 		
-			typedef std::multimap<LimitOrder::loprice,Order>::iterator MapIter;
-			typedef std::multimap<LimitOrder::loprice,Order>::reverse_iterator MapReverseIter;
-			typedef std::unordered_map<LimitOrder::orderid,MapIter>::iterator HashmapIter;
-			
-			typedef std::unordered_map<LimitOrder::orderid,MapIter> BidsHash;
-			typedef std::unordered_map<LimitOrder::orderid,MapIter> AsksHash;
+		typedef std::multimap<LimitOrder::loprice,LMTOrder>::iterator MapIter;
+		typedef std::multimap<LimitOrder::loprice,LMTOrder>::reverse_iterator MapReverseIter;
+		typedef std::unordered_map<LimitOrder::orderid,MapIter>::iterator HashmapIter;
+		
+		typedef std::unordered_map<LimitOrder::orderid,MapIter> BidsHash;
+		typedef std::unordered_map<LimitOrder::orderid,MapIter> AsksHash;
 
-			BidsMap bidsMap; 
-			AsksMap asksMap;
+		BidsMap bidsMap; 
+		AsksMap asksMap;
 
-			BidsHash bidsHash; 
-			AsksHash asksHash;
+		BidsHash bidsHash; 
+		AsksHash asksHash;
 
-			trading::MarketOrder::Size openBids; 
-			trading::MarketOrder::Size openAsks; 
+		std::mutex BidsMap_mutex;
+		std::mutex AsksMap_mutex;
 
-			std::mutex BidsMap_mutex;
-			std::mutex AsksMap_mutex;
+		std::mutex BidsHash_mutex;
+		std::mutex AsksHash_mutex;
 
-			std::mutex BidsHash_mutex;
-			std::mutex AsksHash_mutex;
+		//std::mutex BidsMap_sharedmutex;
+		//std::mutex AsksMap_sharedmutex;
 
-			std::mutex BidsMap_sharedmutex;
-			std::mutex AsksMap_sharedmutex;
-
-			std::mutex BidsHash_sharedmutex;
-			std::mutex AsksHash_sharedmutex;
+		//std::mutex BidsHash_sharedmutex;
+		//std::mutex AsksHash_sharedmutex;
 	};
 }
 #endif
