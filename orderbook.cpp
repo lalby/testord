@@ -1,4 +1,4 @@
-#include "orderbook1.h"
+#include "orderbook.h"
 std::pair<std::map<char,int>::iterator,bool> ret;
 
 
@@ -28,11 +28,11 @@ void Order::OrderBook::add(int order_id, char side, double price, int	size)
 	switch(side)
 	{
 		case 'B':
-			
-			std::lock_guard<BidsMap_mutex> lg_BidsMap_mutex;
+			{	
+			std::lock_guard<std::mutex> lg_BidsMap_mutex(BidsMap_mutex);
 			mapIter = bidsMap.insert(priceorderpair); 
 			PairOrderidIterator ordiditpair(order_id,mapIter);
-			std::lock_guard<BidsHash_mutex> lg_BidsHash_mutex;
+			std::lock_guard<std::mutex> lg_BidsHash_mutex(BidsHash_mutex);
 			hashRet = bidsHash.insert(ordiditpair); 
 			
 			if (!hashRet.second) {
@@ -43,13 +43,14 @@ void Order::OrderBook::add(int order_id, char side, double price, int	size)
 
 
 			break;
-
+   			}
+                  
 		case 'S':
-			
-			std::lock_guard<AsksMap_mutex> lg_AsksMap_mutex;
+			{			
+			std::lock_guard<std::mutex> lg_AsksMap_mutex(AsksMap_mutex);
 			mapIter = asksMap.insert(priceorderpair); 
 			PairOrderidIterator ordiditpair(order_id,mapIter);
-			std::lock_guard<AsksHash_mutex> lg_AsksHash_mutex;
+			std::lock_guard<std::mutex> lg_AsksHash_mutex(AsksHash_mutex);
 			hashRet = bidsHash.insert(ordiditpair); 
 			
 			if (!hashRet.second)
@@ -60,6 +61,7 @@ void Order::OrderBook::add(int order_id, char side, double price, int	size)
 			}
 
 			break;
+			}
 
 	}
 }
@@ -67,9 +69,12 @@ void Order::OrderBook::add(int order_id, char side, double price, int	size)
 
 char Order::OrderBook::getside(int order_id)
 {
+          
+	HashmapIter hmIter;
+	MapIter mapIter; 
 	char side='U';
 	{
-		std::lock_guard<BidsHash_mutex> lg_BidsHash_mutex;
+		std::lock_guard<std::mutex> lg_BidsHash_mutex(BidsHash_mutex);
 		if ((hmIter = bidsHash.find(order_id)) != bidsHash.end()) 
 		{ 
 			side='B';
@@ -77,7 +82,7 @@ char Order::OrderBook::getside(int order_id)
 	}
 	if(side == 'U' )
 	{
-		std::lock_guard<AsksHash_mutex> lg_AsksHash_mutex;
+		std::lock_guard<std::mutex> lg_AsksHash_mutex(AsksHash_mutex);
 		if ((hmIter = asksHash.find(order_id)) != asksHash.end()) 
 		{ 
 			side='S';
@@ -91,19 +96,22 @@ char Order::OrderBook::getside(int order_id)
 void Order::OrderBook::modify(int order_id, int new_size)
 {
 	char side='S';
+	HashmapIter hmIter;
+	MapIter mapIter; 
 	
 	{
 		//Side -B 
-		std::lock_guard<BidsHash_mutex> lg_BidsHash_mutex;
+		std::lock_guard<std::mutex> lg_BidsHash_mutex(BidsHash_mutex);
 		if ((hmIter = bidsHash.find(order_id)) != bidsHash.end()) 
 		{ 
 			side='B';			
 			mapIter = hmIter->second;
-			Order& orderFromMap = mapIter->second;
+			//Order& orderFromMap = mapIter->second;
 			
 			if (new_size) 
 			{ 
-				orderFromMap.size=new_size;
+                mapIter->second.size=new_size;  
+			//	orderFromMap.size=new_size;
 			}
 
 			//new_size==0 condition not handle here 
@@ -113,15 +121,16 @@ void Order::OrderBook::modify(int order_id, int new_size)
 		
 	if(side=='S')
 	{
-		std::lock_guard<AsksHash_mutex> lg_AsksHash_mutex;
+		std::lock_guard<std::mutex> lg_AsksHash_mutex(AsksHash_mutex);
 		if ((hmIter = asksHash.find(order_id)) != asksHash.end()) 
 		{ 
 			mapIter = hmIter->second;
-			Order& orderFromMap = mapIter->second;
+			//Order& orderFromMap = mapIter->second;
 			
 			if (new_size) 
 			{ 
-				orderFromMap.size=new_size;
+				mapIter->second.size=new_size;
+				//orderFromMap.size=new_size;
 			}
 
 			//new_size==0 condition not handle here
@@ -133,22 +142,24 @@ void Order::OrderBook::modify(int order_id, int new_size)
 void Order::OrderBook::remove(int order_id)
 {
 	char side='S';
+	HashmapIter hmIter;
+	MapIter mapIter; 
 
 	{
 		//Side -B
-		BidsHash_mutex.lock()
-		if ((hmIter = bidsHash.find(order_id)) != bidsHash.end()) 
+		BidsHash_mutex.lock();
+		if ((hmIter = bidsHash.find(order_id) )!= bidsHash.end()) 
 		{ 
 			side='B';			
 			mapIter = hmIter->second;
 			bidsHash.erase(hmIter);  
-			BidsHash_mutex.unlock()
+			BidsHash_mutex.unlock();
 
 			BidsMap_mutex.lock();
 			bidsMap.erase(mapIter);
 			BidsMap_mutex.unlock();
 		}
-		BidsHash_mutex.unlock()
+		BidsHash_mutex.unlock();
 	}
 
 	if(side=='S')
@@ -161,7 +172,7 @@ void Order::OrderBook::remove(int order_id)
 			AsksHash_mutex.unlock();
 
 			AsksMap_mutex.lock();
-			AsksMap.erase(mapIter);
+			asksMap.erase(mapIter);
 			AsksMap_mutex.unlock();
 		}
 		AsksHash_mutex.unlock();
@@ -171,23 +182,31 @@ void Order::OrderBook::remove(int order_id)
 
 double Order::OrderBook::get_price(char side,int level)
 {
+    MapIter mapiter; 
 	switch(side)
 	{
 		case 'B':
-			std::lock_guard<BidsMap_mutex> lg_BidsMap_mutex;
-			if(BidsMap.size() > level)
-			{
-				//map index access is faster
-				return(BidsMap[level].first);
-			}
-			break;
+			{			
+				std::lock_guard<std::mutex> lg_BidsMap_mutex(BidsMap_mutex);
+				if(level==1)
+                {
+                    mapiter=bidsMap.begin();
+                    return((*mapiter).first);
+			    }	    
+				break;
+             }
 		case 'S':
-			std::lock_guard<AsksMap_mutex> lg_AsksMap_mutex;
-			if(AsksMap.size() > level)
-			{
-				return(AsksMap[level].first);
-			}
-			break;
+            {
+				std::lock_guard<std::mutex> lg_AsksMap_mutex(AsksMap_mutex);
+
+				if(level==1)
+                {
+                    mapiter=asksMap.begin();
+                    return((*mapiter).first);
+			    }	    
+
+				break;
+            }
 
 	}
 	return -1; //failure 
@@ -195,26 +214,33 @@ double Order::OrderBook::get_price(char side,int level)
 	
 int Order::OrderBook::get_size(char side, int level)
 {
+        
+    MapIter mapiter; 
 	switch(side)
 	{
 		case 'B':
 			{
-				std::lock_guard<BidsMap_mutex> lg_BidsMap_mutex;
-				if(BidsMap.size() > level)
-				{
-					
-					//map index access is faster
-					return(BidsMap[level].second.size);
-				}
+				std::lock_guard<std::mutex> lg_BidsMap_mutex(BidsMap_mutex);
+				if(level==1)
+
+				if(level==1)
+                {
+                    mapiter=bidsMap.begin();
+                    return((*mapiter).second.size);
+			    }	    
+
 			}
 			break;
 		case 'S':
 			{
-				std::lock_guard<AsksMap_mutex> lg_AsksMap_mutex;
-				if(AsksMap.size() > level)
-				{
-					return(AsksMap[level].second.size);
-				}
+				std::lock_guard<std::mutex> lg_AsksMap_mutex(AsksMap_mutex);
+
+				if(level==1)
+                {
+                    mapiter=asksMap.begin();
+                    return((*mapiter).second.size);
+			    }	    
+                
 			}
 			break;
 
