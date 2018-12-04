@@ -1,0 +1,23 @@
+//add 1 S 45.2 100
+add 2 S 45.3 100
+add 1 S 45.1 200 
+add 3 S 45.2 100
+add 4 S 45.2 200
+add 5 S 45.2 300
+add 6 S 45.2 400
+add 7 S 44.1 100
+
+
+get price S 1 //44.1 
+get price S 2 //45.1
+get price S 3 //45.3
+get price S 4 //-1
+
+get size S 1 //100
+get size S 3 //100
+get size S 2 //1100
+get size S 4 //-1
+
+remove 2
+remove 2   //-1
+remove 10  //-1
