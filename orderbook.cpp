@@ -9,7 +9,7 @@ void Order::OrderBook::add(int order_id, char side, double price, int size)
     LMTOrder Order(order_id,side,price,size);
 
     //map key is price and value is Order
-    typedef std::pair<LimitOrder::loprice,LMTOrder> pairPriceOrder;
+
     pairPriceOrder priceorderpair(price,Order);
 
     typedef std::pair<LMTOrder::orderid,MapIter> PairOrderidIterator;
@@ -25,7 +25,6 @@ void Order::OrderBook::add(int order_id, char side, double price, int size)
        {	
           std::lock_guard<std::mutex> lg_BidsMap_mutex(BidsMap_mutex);
           mapIter = bidsMap.insert(priceorderpair); 
-          bidsLevelSet.insert(price);
            
           PairOrderidIterator ordiditpair(order_id,mapIter);
           std::lock_guard<std::mutex> lg_BidsHash_mutex(BidsHash_mutex);
@@ -34,16 +33,38 @@ void Order::OrderBook::add(int order_id, char side, double price, int size)
           if (!hashRet.second) {
 		  //thread safe logger class need to call instaed of below
 		  std::lock_guard<std::mutex> lkg(outmutex);
-		  std::cout<<"duplicate order id :Crtical"<<order_id;
+		  std::cout<<"duplicate order id :Crtical"<<order_id<<std::endl;
+                  //remove inserted 
+                  bidsMap.erase(mapIter);
           }
+          else
+          {
+               int count;
+               LevelIter bidsLevIter=bidsLevelMap.find(price);
+               if(bidsLevIter == bidsLevelMap.end())
+               {
+                 count=1;
+                 pairPriceLevel pricelevelpair(price, count);
+                 bidsLevelMap.insert(pricelevelpair); 
 
+               }                
+               else
+               {
+                 count= (*bidsLevIter).second;
+                 bidsLevelMap.erase(bidsLevIter);
+                  
+                 pairPriceLevel pricelevelpair(price, ++count);
+                 bidsLevelMap.insert(pricelevelpair); 
+                          
+               }
+
+          }
             break;
         }
         case 'S':
         {			
 	     std::lock_guard<std::mutex> lg_AsksMap_mutex(AsksMap_mutex);
        	     mapIter = asksMap.insert(priceorderpair); 
-             asksLevelSet.insert(price);
 
 	     PairOrderidIterator ordiditpair(order_id,mapIter);
 	     std::lock_guard<std::mutex> lg_AsksHash_mutex(AsksHash_mutex);
@@ -55,6 +76,28 @@ void Order::OrderBook::add(int order_id, char side, double price, int size)
 		 std::lock_guard<std::mutex> lkg(outmutex);
 		 std::cout<<"duplicate order id"<<order_id;
 	     }
+             else
+             { 
+               int count;
+               LevelIter asksLevIter=asksLevelMap.find(price);
+               if(asksLevIter == asksLevelMap.end())
+               {
+                 count=1;
+                 pairPriceLevel pricelevelpair(price, count);
+                 asksLevelMap.insert(pricelevelpair); 
+
+               }                
+               else
+               {
+                 count= (*asksLevIter).second;
+                 asksLevelMap.erase(asksLevIter);
+                  
+                 pairPriceLevel pricelevelpair(price, ++count);
+                 asksLevelMap.insert(pricelevelpair); 
+                          
+               }
+
+          }
              break;
 	 }
      }
@@ -115,25 +158,56 @@ void Order::OrderBook::remove(int order_id)
            side='B';			
            mapIter = hmIter->second;
            bidsHash.erase(hmIter);  
-           //LMTOrder order((;
-           bidsLevelSet.erase(mapIter->second.price);
-           BidsHash_mutex.unlock();
+
+           int count;
+           double price=(*mapIter).second.price;
+           LevelIter bidsLevIter=bidsLevelMap.find(price);
+           if(bidsLevIter != bidsLevelMap.end())
+           {
+               count= (*bidsLevIter).second;
+               bidsLevelMap.erase(bidsLevIter);
+               
+               if(--count >0)    
+               {
+                 pairPriceLevel pricelevelpair(price, count);
+                 bidsLevelMap.insert(pricelevelpair); 
+               }
+                          
+           }
 
            BidsMap_mutex.lock();
            bidsMap.erase(mapIter);
            BidsMap_mutex.unlock();
-        }
-	BidsHash_mutex.unlock();
+         }
+         BidsHash_mutex.unlock();
+        
      }
 
-    if(side=='S')
+    if(side == 'S')
     {
         AsksHash_mutex.lock();
         if ((hmIter = asksHash.find(order_id)) != asksHash.end()) 
         { 
             mapIter = hmIter->second;
             asksHash.erase(hmIter);
-            asksLevelSet.erase(mapIter->second.price);
+
+           int count;
+           double price=(*mapIter).second.price;
+           LevelIter asksLevIter=asksLevelMap.find(price);
+           if(asksLevIter != asksLevelMap.end())
+           {
+               count= (*asksLevIter).second;
+               asksLevelMap.erase(asksLevIter);
+               
+               if(--count >0)    
+               {
+                 pairPriceLevel pricelevelpair(price, count);
+                 asksLevelMap.insert(pricelevelpair); 
+               }
+                          
+           }
+
+
             AsksHash_mutex.unlock();
 
             AsksMap_mutex.lock();
@@ -156,16 +230,16 @@ double Order::OrderBook::get_price(char side,int level)
            std::lock_guard<std::mutex> lg_BidsMap_mutex(BidsMap_mutex);
            int currlevel=1;
            //generally use upper levels
-           BidsLevIter bidsleviter;
+           LevelIter bidsleviter;
            
-           bidsleviter=bidsLevelSet.begin();
-           while(level > currlevel && bidsleviter !=bidsLevelSet.end())
+           bidsleviter=bidsLevelMap.begin();
+           while(level > currlevel && bidsleviter !=bidsLevelMap.end())
            {
                ++currlevel;
                ++bidsleviter;
            }
-           if(level==currlevel && bidsleviter !=bidsLevelSet.end()){
-               return(*bidsleviter);}
+           if(level==currlevel && bidsleviter !=bidsLevelMap.end()){
+               return((*bidsleviter).first);}
  	
            break;
         }
@@ -174,15 +248,15 @@ double Order::OrderBook::get_price(char side,int level)
            std::lock_guard<std::mutex> lg_AsksMap_mutex(AsksMap_mutex);
            int currlevel=1;
            //generally use upper levels
-           AsksLevIter asksleviter; 
-           asksleviter=asksLevelSet.begin();
-           while(level > currlevel &&  asksleviter!=asksLevelSet.end())
+           LevelIter asksleviter; 
+           asksleviter=asksLevelMap.begin();
+           while(level > currlevel &&  asksleviter!=asksLevelMap.end())
            {
                ++currlevel;
                ++asksleviter;
            }
-           if(level==currlevel &&  asksleviter!=asksLevelSet.end()){
-               return(*asksleviter);}
+           if(level==currlevel &&  asksleviter!=asksLevelMap.end()){
+               return((*asksleviter).first);}
 
            break;
          }
@@ -205,19 +279,19 @@ int Order::OrderBook::get_size(char side, int level)
               int currlevel=1;
               //generally use upper levels
 
-              BidsLevIter bidsleviter;
-              bidsleviter=bidsLevelSet.begin();
+              LevelIter bidsleviter;
+              bidsleviter=bidsLevelMap.begin();
 
-              while(level !=currlevel && bidsleviter !=bidsLevelSet.end())
+              while(level !=currlevel && bidsleviter !=bidsLevelMap.end())
               {
                   ++currlevel;
                   ++bidsleviter;
               }
               
-              if(level==currlevel && bidsleviter !=bidsLevelSet.end())
+              if(level==currlevel && bidsleviter !=bidsLevelMap.end())
               {
                   int totalsize=0;
-                  rangePair=bidsMap.equal_range(*bidsleviter); 
+                  rangePair=bidsMap.equal_range((*bidsleviter).first); 
                   MapIter mapiter; 
                   for(mapiter = rangePair.first ;mapiter !=rangePair.second;++mapiter)
                   {
@@ -235,20 +309,19 @@ int Order::OrderBook::get_size(char side, int level)
                int currlevel=1;
                //generally use upper levels
               
-               AsksLevIter asksleviter;
-               asksleviter=asksLevelSet.begin();
+               LevelIter asksleviter;
+               asksleviter=asksLevelMap.begin();
 
-               while(level > currlevel && asksleviter !=asksLevelSet.end())
+               while(level > currlevel && asksleviter !=asksLevelMap.end())
                {
-                   std::cout<<"Level"<<currlevel <<" "<<*asksleviter;  
                    ++currlevel;
                    ++asksleviter;
                }
 
-               if(level==currlevel && asksleviter !=asksLevelSet.end())
+               if(level==currlevel && asksleviter !=asksLevelMap.end())
                {
                    int totalsize=0;
-                   rangePair=asksMap.equal_range(*asksleviter); 
+                   rangePair=asksMap.equal_range((*asksleviter).first); 
                    for(mapiter = rangePair.first ;mapiter !=rangePair.second;++mapiter)
                    {
                        totalsize+=(*mapiter).second.size;

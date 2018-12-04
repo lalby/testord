@@ -10,12 +10,27 @@
 //#include<shared_mutex>
 
 /*Simple Order book
-Singleton orderbook class 
-two multimap for 
+Singleton orderbook class is used to maintain  
 a)Buy (highest bid first)
 b)Sell (lowest ask first)
-For faster lookup (O(1)) used  un_orderd map to keep orderid and lookup iterator value in the multimap(lookup O(log(n).
-Mutex mechanism can be further improved by shared_mutex C++17
+Buy,Sell separately monitored in two differnt ordered map <price,order> as price is the key.
+This two map differentiated by its map compare method(greater/lesser order).
+Map is implemented internaly as redblack tree so this will take care of the order.  
+Map lookup is O(log n) to achieve faster lookup used the below approach.
+
+For faster lookup (O(1)) used an un_orderd map to keep orderid and lookup iterator value in the multimap.
+
+LevelMap:
+
+To maintain the Level , used map<price,count variable to keep number of elements in the particular level>
+while insert element in the levelmap ,need to check already elements in the same price lvel just increase the counter.
+Before delete any element , decrease the count .if  count==0 remove the element from the levelmap 
+Price value of the particular level get from levelmap and find the elements in the mainmap. 
+
+These all map should be in sync.
+
+TODO:improve the locking mechanism using -shared_mutx c++17 and multithread testing is pending.
+
 */
 
 namespace Order
@@ -57,7 +72,11 @@ namespace Order
 	static OrderBook& getInstance();
 
 	private:
-	char getside(int);
+	//char getside(int);
+
+        typedef std::pair<LimitOrder::loprice,LMTOrder> pairPriceOrder;
+        typedef std::pair<LimitOrder::loprice,int> pairPriceLevel;
+
 	typedef std::multimap<LimitOrder::loprice,LMTOrder,std::greater<LimitOrder::loprice> > BidsMap;
 	typedef std::multimap<LimitOrder::loprice,LMTOrder,std::less<LimitOrder::loprice> > AsksMap;
 		
@@ -67,18 +86,20 @@ namespace Order
 	typedef std::unordered_map<LimitOrder::orderid,MapIter> BidsHash;
 	typedef std::unordered_map<LimitOrder::orderid,MapIter> AsksHash;
 
-        typedef std::set<LimitOrder::loprice,std::greater<LimitOrder::loprice>> BidsLevelSet;  
-        typedef std::set<LimitOrder::loprice> AsksLevelSet;  
 
-        typedef std::set<LimitOrder::loprice,std::greater<LimitOrder::loprice>> ::iterator BidsLevIter;  
-        typedef std::set<LimitOrder::loprice> ::iterator AsksLevIter;  
+        typedef std::map<LimitOrder::loprice,int,std::greater<LimitOrder::loprice>> BidsLevelMap;  
+        typedef std::map<LimitOrder::loprice,int,std::less<LimitOrder::loprice>> AsksLevelMap;  
+
+        typedef std::map<LimitOrder::loprice,int>::iterator  LevelIter;  
+
+
 
         // to store order
 	BidsMap bidsMap; 
 	AsksMap asksMap;
 
-        BidsLevelSet bidsLevelSet; 
-        AsksLevelSet asksLevelSet;
+        BidsLevelMap bidsLevelMap; 
+        AsksLevelMap asksLevelMap;
 
         //Map to store iterator for faster lookup
         //Order map and Hashmap should be in sync.

@@ -2,6 +2,7 @@
 #include "orderbook.h"
 #include "filehandler.h"
 
+//usage :: ./orderbook inputfile 
 
 int main(int argc,char *argv[])
 {

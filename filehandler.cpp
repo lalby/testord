@@ -1,6 +1,7 @@
 #include<iostream>
 #include "filehandler.h"
 #include "utility.h"
+#include <chrono>
 
 bool FileHandler::isopen()   
 {
@@ -12,6 +13,8 @@ bool FileHandler::isopen()
     
 void FileHandler::process(Order::OrderBook &orderbook)
 {
+    //std::chrono::high_resolution_clock::time_point t1=std::chrono::high_resolution_clock::now(); 
+       
     if(isopen())
     {  
         std::vector<char *> tokens;
@@ -23,6 +26,8 @@ void FileHandler::process(Order::OrderBook &orderbook)
 		
            //std::vector<std::unique_ptr<char>> tokens;
            //avoiding due to latency each time need to create in the loop
+
+          //TODO - validation of line  
                 
            while(getline(infile,line))
            {
@@ -73,5 +78,11 @@ void FileHandler::process(Order::OrderBook &orderbook)
               tokens.clear();
 
         }                       
+
     }			
+
+   
+    //std::chrono::high_resolution_clock::time_point t2=std::chrono::high_resolution_clock::now(); 
+    //std::chrono::duration<double> time_span =std::chrono::duration_cast<std::chrono::duration<double>>(t2-t1);  
+    //std::cout<<"time taken:" <<time_span.count();
 };
