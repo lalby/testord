@@ -3,6 +3,8 @@
 #include <fstream>
 #include <string.h>
 #include "utility.h"
+#include <memory>
+#include <algorithm>
 
 
 int main(int argc,char *argv[])
@@ -29,21 +31,19 @@ int main(int argc,char *argv[])
 		std::string line;
            
 		char action[30]={0};
+		
+		//std::vector<std::unique_ptr<char>> tokens;
+		//avoiding due to latency
+                
 		std::vector<char *> tokens;
 
 		while(getline(infile,line))
 		{
-            //std::cout<<line<<"\n";
             memset(action,0,sizeof(action));
-            tokens.clear();
              
             split(line,tokens);
             strncpy(action,tokens[0],sizeof(action)-1);
-
-			for(auto s : tokens)
-			std::cout<<"  "<<s;
-                        std::cout<<"\n"; 
-             
+            
 			if(strcmp(action,"add")==0)
 			{
 				orderbook.add(atoi(tokens[1]),(*tokens[2]),atof(tokens[3]),atoi(tokens[4]));
@@ -67,6 +67,11 @@ int main(int argc,char *argv[])
 					std::cout<<orderbook.get_size(*tokens[2],atoi(tokens[3]))<<"\n";
 				}
 			}
+           
+			for_each(tokens.begin(),tokens.end(),[](char *p) {
+				if(*p) delete p;} 
+			);			
+            tokens.clear();
 
 		  }
 		infile.close();

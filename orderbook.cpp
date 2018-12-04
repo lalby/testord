@@ -253,7 +253,6 @@ int Order::OrderBook::get_size(char side, int level)
 					for(mapiter = rangePair.first ;mapiter !=rangePair.second;++mapiter)
 					{
 						totalsize+=(*mapiter).second.size;
-						std::cout<<(*mapiter).first <<" "<<totalsize;
 					}
                                return totalsize;
 			    }	    
