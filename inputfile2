@@ -20,4 +20,4 @@ modify 8 150
 add 9 S 35.1 200
 add 10 B 22.5 350
 get size B 2 //this returns 450
-get price S 3//this returns 37.8
+get price S 3 //this returns 37.8
