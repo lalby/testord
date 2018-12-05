@@ -26,8 +26,6 @@ void FileHandler::process(Order::OrderBook &orderbook)
 		
            //std::vector<std::unique_ptr<char>> tokens;
            //avoiding due to latency each time need to create in the loop
-
-          //TODO - validation of line  
                 
            while(getline(infile,line))
            {
@@ -39,26 +37,32 @@ void FileHandler::process(Order::OrderBook &orderbook)
             
               if(strcmp(action,"add")==0)
               {
-                  orderbook.add(atoi(tokens[1]),(*tokens[2]),atof(tokens[3]),atoi(tokens[4]));
+                  if(tokens.size() >=5 && (*tokens[2]=='B' || *tokens[2]=='S')) 
+                  { 
+                     orderbook.add(std::stoi(tokens[1]),(*tokens[2]),std::stod(tokens[3]),std::stoi(tokens[4]));
+                  }
               }				
               else if(strcmp(action,"modify")==0)
               {
-                  orderbook.modify(atoi(tokens[1]),atoi(tokens[2]));
+                  if(tokens.size()>=3 )  
+                  orderbook.modify(std::stoi(tokens[1]),std::stoi(tokens[2]));
               }
               else if(strcmp(action,"remove")==0)
               {
-                  orderbook.remove(atoi(tokens[1]));	
+                  if(tokens.size()>=2)
+                  orderbook.remove(std::stoi(tokens[1]));	
               }
               else if(strcmp(action,"get")==0)
               {
+                  if(tokens.size()>=4) {
                   if(strcmp(tokens[1],"price")==0)
                   {
-                      std::cout<<orderbook.get_price(*tokens[2],atoi(tokens[3]))<<"\n";
+                      std::cout<<orderbook.get_price(*tokens[2],std::stoi(tokens[3]))<<"\n";
                   }
                   else if(strcmp(tokens[1],"size")==0)
                   {
-                       std::cout<<orderbook.get_size(*tokens[2],atoi(tokens[3]))<<"\n";
-                  }
+                       std::cout<<orderbook.get_size(*tokens[2],std::stoi(tokens[3]))<<"\n";
+                  }}
                }
           
               for_each(tokens.begin(),tokens.end(),[](char *p) {
@@ -70,7 +74,7 @@ void FileHandler::process(Order::OrderBook &orderbook)
         infile.close();
         } catch(...)
         {
-              std::cout<<"operation failed:";
+              std::cout<<"some operation failed/ignored -may be incorrect input data ";
               //not using smart pointers - so clear here also incase of exception.
               for_each(tokens.begin(),tokens.end(),[](char *p) {
                       if(*p) delete p;} 
@@ -86,3 +90,4 @@ void FileHandler::process(Order::OrderBook &orderbook)
     //std::chrono::duration<double> time_span =std::chrono::duration_cast<std::chrono::duration<double>>(t2-t1);  
     //std::cout<<"time taken:" <<time_span.count();
 };
+

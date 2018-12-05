@@ -25,6 +25,8 @@ class FileHandler
     public:
     FileHandler(char *filename):infile(filename){
     } 
+
+    FileHandler(){}
     bool isopen();   
     void process(Order::OrderBook &);
 };
