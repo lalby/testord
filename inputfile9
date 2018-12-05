@@ -1,0 +1,128 @@
+//Please ignore the comment - huge input created 
+add 1 B 45.2 100
+modify 1 50
+get price B 1 //45.2
+add 2 S 51.4 200
+add 3 B 45.1 100
+get size S 1 //200
+add 4 S 51.2 300
+add 5 S 51.2 200
+remove 3
+get price B 1 //45.2
+get size B 1 //50
+get price S 1 //51.2
+get size S 1 //500 
+add 6 B 22.5 100
+add 7 S 37.8 250
+add 8 B 24.7 150
+get price B 1 //this returns 24.7
+get price B 2 //this returns 22.5
+modify 3 50
+add 14 S 35.1 250
+add 15 S 37.8 150
+get price S 1//this returns 35.1
+remove 3
+get size S 1 //this returns 250
+get size S 2 //this returns 400.
+remove 5
+add 26 S 37.8 150
+add 27 S 37.6 350
+add 28 B 24.7 200
+get size B 1 //this returns 200
+get price S 2//this returns 37.6
+modify 8 150
+add 29 S 35.1 200
+add 10 B 22.5 350
+get size B 2 //this returns 450
+get price S 3 //this returns 37.8
+add 31 B 22.5 100
+add 32 S 37.8 250
+add 33 B 24.7 150
+get price B 1 //this returns 24.7
+get price B 2 //this returns 22.5
+modify 3 50
+add 44 S 35.1 250
+add 45 S 37.8 150
+get price S 1//this returns 35.1
+remove 3
+get size S 1 //this returns 250
+get size S 2 //this returns 400.
+remove 5
+add 46 S 37.8 150
+add 47 S 37.6 350
+add 48 B 24.7 200
+get size B 1 //this returns 200
+get price S 2//this returns 37.6
+modify 8 150
+add 49 S 35.1 200
+add 50 B 22.5 350
+get size B 2 //this returns 450
+get price S 3 //this returns 37.8
+add 51 B 45.2 100
+add 52 B 45.3 100
+add 61 B 45.1 200
+add 63 B 45.2 100
+add 64 B 45.2 200
+add 65 B 45.2 300
+add 66 B 45.2 400
+add 67 B 44.1 100
+
+
+get price B 1 //45.3 
+get price B 2 //45.2
+get price B 3 //44.1
+get price B 4 //-1
+
+get size B 1 //100
+get size B 3 //100
+get size B 2 //1100
+get size B 4 //-1
+
+remove 2
+remove 2   //-1
+remove 10  //-1
+add 71 B 45.2 100
+add 72 B 45.3 100
+add 81 B 45.1 200
+add 83 B 45.2 100
+add 84 B 45.2 200
+add 85 B 45.2 300
+add 86 B 45.2 400
+add 87 B 44.1 100
+
+
+get price B 1 //45.3 
+get price B 2 //45.2
+get price B 3 //44.1
+get price B 4 //-1
+
+get size B 1 //100
+get size B 3 //100
+get size B 2 //1100
+get size B 4 //-1
+
+remove 2
+remove 2   //-1
+remove 10  //-1
+add 91 S 45.2 100
+add 92 S 45.3 100
+add 93 S 45.2 100
+add 94 S 45.2 200
+add 95 S 45.2 300
+add 96 S 45.2 400
+add 97 S 44.1 100
+
+
+get price S 1 //44.1 
+get price S 2 //45.2
+get price S 3 //45.3
+get price S 4 //-1
+
+get size S 1 //100
+get size S 3 //100
+get size S 2 //1100
+get size S 4 //-1
+
+remove 2
+remove 2   //-1
+remove 10  //-1

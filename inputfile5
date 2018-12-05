@@ -10,13 +10,13 @@ add 7 S 44.1 100
 
 get price S 1 //44.1 
 get price S 2 //45.1
-get price S 3 //45.3
-get price S 4 //-1
+get price S 3 //45.2
+get price S 4 //45.3
 
 get size S 1 //100
-get size S 3 //100
-get size S 2 //1100
-get size S 4 //-1
+get size S 3 //1100
+get size S 2 //200
+get size S 4 //100
 
 remove 2
 remove 2   //-1

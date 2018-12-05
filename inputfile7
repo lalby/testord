@@ -1,0 +1,22 @@
+//test invalid file
+//add 1 S 45.2 100
+add 2 Q 45.3 100
+add S 45.1 200 
+add 4 B 23.2 300.00
+
+
+add 3 S 45.1 200 
+get size S 1 //200
+
+get price S 1 //45.1
+get price B 1 //23.2
+
+get S 3 
+get size S 1 //200
+
+
+remove S 
+remove    
+remove 3  
+
+
