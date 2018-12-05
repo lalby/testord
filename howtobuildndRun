@@ -1,0 +1,8 @@
+
+1) git checkout the files.
+2) run cmake file  
+cmake .
+3) run make
+make
+4) to run the program
+./orderbook inputfile1
